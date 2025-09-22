@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Envio de Laudos Médicos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #212529;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 32px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #e9ecef;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            color: #212529;
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .form-section {
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            transition: border-color 0.15s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .log-section {
+            display: none;
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 24px;
+            border: 1px solid #dee2e6;
+        }
+
+        .log-section.show {
+            display: block;
+        }
+
+        .log-header {
+            color: #495057;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-content {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            border: 1px solid #e9ecef;
+        }
+
+        .log-line {
+            color: #495057;
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .log-line.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 3px solid #28a745;
+        }
+
+        .log-line.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 3px solid #dc3545;
+        }
+
+        .log-line.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 3px solid #ffc107;
+        }
+
+        .status-card {
+            display: none;
+            background: white;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 16px;
+            border: 1px solid #dee2e6;
+        }
+
+        .status-card.show {
+            display: block;
+        }
+
+        .status-success {
+            border-left: 4px solid #28a745;
+            background: #f8fff9;
+        }
+
+        .status-error {
+            border-left: 4px solid #dc3545;
+            background: #fff8f8;
+        }
+
+        .status-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .status-success .status-title {
+            color: #155724;
+        }
+
+        .status-error .status-title {
+            color: #721c24;
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            float: right;
+            margin-top: -2px;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-section, .help-section {
+                padding: 16px;
+            }
+        }
+
+        .help-section {
+            background: #ffffff;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+        }
+
+        .help-header {
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.15s ease;
+            user-select: none;
+        }
+
+        .help-header:hover {
+            background: #e9ecef;
+        }
+
+        .help-header span {
+            flex: 1;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .help-arrow {
+            color: #6c757d;
+            transition: transform 0.15s ease;
+            font-size: 0.8rem;
+        }
+
+        .help-arrow.rotated {
+            transform: rotate(180deg);
+        }
+
+        .help-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .help-content.show {
+            max-height: 1000px;
+        }
+
+        .help-steps {
+            padding: 20px;
+        }
+
+        .help-step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        .help-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            margin: 0 0 6px 0;
+            color: #212529;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .help-notes {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .help-notes h4 {
+            margin: 0 0 12px 0;
+            color: #495057;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .help-notes ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .help-notes li {
+            color: #6c757d;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .help-notes li:last-child {
+            margin-bottom: 0;
+        }
+
+        .help-example {
+            padding: 16px 20px;
+            border-top: 1px solid #dee2e6;
+            background: #fff;
+        }
+
+        .help-example h4 {
+            margin: 0 0 12px 0;
+            color: #495057;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .example-code {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: #495057;
+            display: inline-block;
+        }
+
+        .health-status {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            color: #495057;
+        }
+
+        .health-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="health-status" id="healthStatus">
+        <div class="health-dot"></div>
+        <span>Online</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-file-medical-alt"></i> Sistema de Laudos</h1>
+            <p>Envio de laudos médicos via WhatsApp</p>
+        </div>
+
+        <div class="help-section">
+            <div class="help-header" onclick="toggleHelp()">
+                <i class="fas fa-question-circle"></i>
+                <span>Como usar o sistema</span>
+                <i class="fas fa-chevron-down help-arrow" id="helpArrow"></i>
+            </div>
+            <div class="help-content" id="helpContent">
+                <div class="help-steps">
+                    <div class="help-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Obtenha o código da requisição</h4>
+                            <p>Localize o código da requisição médica no sistema do laboratório ou documento físico.</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Digite o código no campo abaixo</h4>
+                            <p>Insira o código exatamente como aparece na requisição, sem espaços extras.</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Clique em "Processar Laudo"</h4>
+                            <p>O sistema irá buscar o laudo na API e enviar automaticamente via WhatsApp.</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Acompanhe o resultado</h4>
+                            <p>Verifique o status do envio nos logs que aparecerão abaixo do formulário.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-notes">
+                    <h4><i class="fas fa-info-circle"></i> Informações importantes:</h4>
+                    <ul>
+                        <li><strong>Tempo de processamento:</strong> O envio pode levar alguns segundos</li>
+                        <li><strong>Formato do código:</strong> Aceita códigos alfanuméricos</li>
+                        <li><strong>Destinatários:</strong> Enviado automaticamente para a lista de contatos configurada</li>
+                        <li><strong>Formato do arquivo:</strong> Laudos são enviados em PDF</li>
+                    </ul>
+                </div>
+
+                <div class="help-example">
+                    <h4><i class="fas fa-lightbulb"></i> Exemplo de código:</h4>
+                    <div class="example-code">LAB2024001</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <form id="laudoForm">
+                <div class="form-group">
+                    <label for="codRequisicao">
+                        <i class="fas fa-barcode"></i> Código da Requisição
+                    </label>
+                    <input 
+                        type="text" 
+                        id="codRequisicao" 
+                        class="form-control" 
+                        placeholder="Digite o código da requisição"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    Processar Laudo
+                </button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processando requisição... Aguarde!</p>
+        </div>
+
+        <div class="status-card" id="statusCard">
+            <div class="status-title" id="statusTitle"></div>
+            <div id="statusMessage"></div>
+        </div>
+
+        <div class="log-section" id="logSection">
+            <div class="log-header">
+                <i class="fas fa-terminal"></i>
+                Log de Execução
+                <button class="clear-btn" onclick="clearLogs()">Limpar</button>
+            </div>
+            <div class="log-content" id="logContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar status do sistema ao carregar
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const healthStatus = document.getElementById('healthStatus');
+                if (data.status === 'online') {
+                    healthStatus.innerHTML = '<div class="health-dot"></div><span>Online</span>';
+                } else {
+                    healthStatus.innerHTML = '<div class="health-dot" style="background: #dc3545;"></div><span>Offline</span>';
+                }
+            } catch (error) {
+                const healthStatus = document.getElementById('healthStatus');
+                healthStatus.innerHTML = '<div class="health-dot" style="background: #ffc107;"></div><span>Verificando</span>';
+            }
+        }
+
+        // Verificar status a cada 30 segundos
+        checkSystemHealth();
+        setInterval(checkSystemHealth, 30000);
+
+        // Função para toggle da seção de ajuda
+        function toggleHelp() {
+            const helpContent = document.getElementById('helpContent');
+            const helpArrow = document.getElementById('helpArrow');
+            
+            helpContent.classList.toggle('show');
+            helpArrow.classList.toggle('rotated');
+        }
+
+        document.getElementById('laudoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const codRequisicao = document.getElementById('codRequisicao').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const statusCard = document.getElementById('statusCard');
+            const logSection = document.getElementById('logSection');
+            
+            if (!codRequisicao) {
+                showStatus('error', 'Erro', 'Por favor, digite o código da requisição.');
+                return;
+            }
+
+            // Mostrar loading
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            statusCard.classList.remove('show');
+            logSection.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/processar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ codRequisicao: codRequisicao })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showStatus('success', 'Sucesso!', 
+                        `Laudo processado e enviado com sucesso!<br>
+                         <strong>Paciente:</strong> ${data.paciente}<br>
+                         <strong>Requisição:</strong> ${data.requisicao}`);
+                    
+                    // Limpar o formulário após sucesso
+                    document.getElementById('codRequisicao').value = '';
+                } else {
+                    showStatus('error', 'Erro no Processamento', data.message || 'Erro desconhecido');
+                }
+
+                // Mostrar logs se disponíveis
+                if (data.log && data.log.length > 0) {
+                    showLogs(data.log);
+                }
+
+            } catch (error) {
+                showStatus('error', 'Erro de Conexão', 
+                    'Não foi possível conectar com o servidor. Verifique sua conexão.');
+                console.error('Erro:', error);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+
+        function showStatus(type, title, message) {
+            const statusCard = document.getElementById('statusCard');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+
+            statusCard.className = `status-card show status-${type}`;
+            statusTitle.textContent = title;
+            statusMessage.innerHTML = message;
+        }
+
+        function showLogs(logs) {
+            const logSection = document.getElementById('logSection');
+            const logContent = document.getElementById('logContent');
+            
+            logContent.innerHTML = '';
+            
+            logs.forEach(log => {
+                const logLine = document.createElement('div');
+                logLine.className = 'log-line';
+                
+                if (log.includes('ERRO') || log.includes('❌')) {
+                    logLine.classList.add('error');
+                } else if (log.includes('AVISO') || log.includes('⚠️')) {
+                    logLine.classList.add('warning');
+                } else if (log.includes('✅')) {
+                    logLine.classList.add('success');
+                }
+                
+                logLine.textContent = log;
+                logContent.appendChild(logLine);
+            });
+            
+            logSection.classList.add('show');
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function clearLogs() {
+            const logSection = document.getElementById('logSection');
+            const logContent = document.getElementById('logContent');
+            
+            logContent.innerHTML = '';
+            logSection.classList.remove('show');
+        }
+
+        // Auto-focus no campo de entrada
+        document.getElementById('codRequisicao').focus();
+
+        // Permitir submit com Enter
+        document.getElementById('codRequisicao').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('laudoForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
