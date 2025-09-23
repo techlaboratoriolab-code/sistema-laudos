@@ -24,6 +24,7 @@ NOME_ARQUIVO_SAIDA = "Laudo Médico.pdf"
 MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Requisição: {cod_requisicao})."
 
 # --- CONFIGURAÇÃO DO ARQUIVO DE CONTATOS ---
+# ALTERAÇÃO: Agora busca o arquivo na mesma pasta do script.
 CAMINHO_CSV_CONTATOS = "Números de confiança LAB.csv"
 
 # --- FUNÇÕES AUXILIARES (LÓGICA DA APLICAÇÃO) ---
@@ -33,6 +34,7 @@ def carregar_contatos_csv(caminho_arquivo):
     contatos = {}
     print(f"Tentando carregar contatos do arquivo: {caminho_arquivo}")
     try:
+        # Garante que o arquivo seja encontrado mesmo quando rodando no Render
         diretorio_atual = os.path.dirname(os.path.abspath(__file__))
         caminho_completo = os.path.join(diretorio_atual, caminho_arquivo)
         
@@ -95,13 +97,7 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
 # --- CARREGAMENTO INICIAL DOS CONTATOS ---
 CONTATOS_CARREGADOS = carregar_contatos_csv(CAMINHO_CSV_CONTATOS)
 
-# --- ROTAS DA API FLASK ---
-
-@app.route('/', methods=['GET'])
-def index():
-    """Rota raiz para verificar se a API está online."""
-    return "<h1>API de Automação de Clínicas no ar!</h1><p>Para usar, envie uma requisição POST para /processar.</p>"
-
+# --- ROTA DA API FLASK ---
 @app.route('/processar', methods=['POST'])
 def processar_endpoint():
     """Endpoint principal que recebe o código da requisição e executa o fluxo."""
@@ -149,6 +145,8 @@ def processar_endpoint():
 
 # --- EXECUÇÃO DO SERVIDOR ---
 if __name__ == '__main__':
+    # O Render usa uma variável de ambiente PORT para definir a porta.
     port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Para deploy, 'debug=False' é mais seguro e eficiente.
+    app.run(host='0.0.0.0', port=port, debug=False)
 
