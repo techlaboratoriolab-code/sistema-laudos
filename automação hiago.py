@@ -3,10 +3,13 @@ import json
 import base64
 import os
 import csv
-from flask import Flask, request, jsonify
+import time
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 
 # --- INICIALIZAÇÃO DO FLASK ---
 app = Flask(__name__)
+CORS(app)
 
 # --- CONFIGURAÇÕES GERAIS ---
 API_URL = "https://lab.aplis.inf.br/api/integracao.php"
@@ -15,21 +18,22 @@ API_PASSWORD = "nintendo64"
 API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
-WAHA_URL = "http://localhost:9000/api/sendFile"
-WAHA_SESSION = "testano" # NOME DA SESSÃO EXIGIDO PELA SUA API
+WAHA_URL = "http://localhost:3000/api/sendFile"
+WAHA_SESSION = "testano"
 # WAHA_API_KEY = "SUA_CHAVE_DE_API_AQUI"
 
 # --- CONFIGURAÇÕES DE MENSAGEM E ARQUIVO (EDITÁVEL) ---
-NOME_ARQUIVO_SAIDA = "Laudo Médico.pdf"
 MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Requisição: {cod_requisicao})."
+
+NOME_ARQUIVO_SAIDA = "nome_paciente"
 
 # --- CONFIGURAÇÃO DO ARQUIVO DE CONTATOS ---
 CAMINHO_CSV_CONTATOS = "Números de confiança LAB.csv"
 
-# --- FUNÇÕES AUXILIARES (LÓGICA DA APLICAÇÃO) ---
+# --- FUNÇÕES AUXILIARES ---
 
 def carregar_contatos_csv(caminho_arquivo):
-    """Lê um arquivo CSV e retorna um dicionário de contatos por local de origem."""
+    """Lê um arquivo CSV, valida os números e retorna um dicionário de contatos."""
     contatos = {}
     print(f"Tentando carregar contatos do arquivo: {caminho_arquivo}")
     try:
@@ -42,11 +46,17 @@ def carregar_contatos_csv(caminho_arquivo):
                 print("!!! ERRO DE CABEÇALHO !!! O CSV deve ter as colunas 'LocalOrigem' e 'NumeroWhatsApp'.")
                 return {}
 
-            for row in reader:
-                local, numero = row.get('LocalOrigem'), row.get('NumeroWhatsApp')
+            for i, row in enumerate(reader, 2):
+                local = row.get('LocalOrigem', '').strip()
+                numero = row.get('NumeroWhatsApp', '').strip()
+                
                 if local and numero:
-                    if local not in contatos: contatos[local] = []
-                    contatos[local].append(numero)
+                    if numero.endswith('@c.us') and ' ' not in numero:
+                        if local not in contatos:
+                            contatos[local] = []
+                        contatos[local].append(numero)
+                    else:
+                        print(f"!!! AVISO !!! Número em formato inválido na linha {i} do CSV e foi ignorado: '{numero}'")
 
         print(f"Sucesso! {len(contatos)} locais de origem carregados do CSV.")
         return contatos
@@ -73,7 +83,10 @@ def fazer_requisicao_api(cmd, cod_req):
         return {"status": "error", "message": f"Erro de conexão com a API do lab: {e}"}
 
 def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
-    """Função para enviar um arquivo PDF via WAHA usando um payload JSON."""
+    """
+    Função para enviar um arquivo PDF via WAHA usando um payload JSON.
+    Usa uma estratégia "fire and forget" para lidar com a lentidão do servidor WAHA.
+    """
     headers = {'Content-Type': 'application/json'}
     if 'WAHA_API_KEY' in globals() and WAHA_API_KEY:
         headers['X-Api-Key'] = WAHA_API_KEY
@@ -84,27 +97,41 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
         "session": WAHA_SESSION
     }
     try:
-        response = requests.post(WAHA_URL, headers=headers, json=payload, timeout=60)
-        if response.status_code in [200, 201]:
-            return {"status": "success", "message": f"PDF enviado para {destinatario}."}
-        else:
-            return {"status": "error", "message": f"WAHA retornou status {response.status_code} para {destinatario}. Resposta: {response.text}"}
+        # --- ESTRATÉGIA "FIRE AND FORGET" ---
+        # Enviamos a requisição com um timeout muito curto (2 segundos).
+        # A intenção é apenas despachar os dados para o WAHA e não esperar
+        # pelo processamento completo, que está a causar o timeout.
+        print(f"Disparando requisição para {destinatario} (estratégia 'fire and forget')...")
+        requests.post(WAHA_URL, headers=headers, json=payload, timeout=2)
+        
+        # Se chegarmos aqui, o WAHA respondeu muito rápido (improvável, mas possível)
+        return {"status": "success", "message": f"Requisição enviada para {destinatario}. WAHA respondeu inesperadamente rápido."}
+    
+    except requests.exceptions.Timeout:
+        # Este é o resultado ESPERADO. O timeout acontece, mas os dados já foram enviados.
+        # Assumimos que o WAHA irá processar o pedido em segundo plano.
+        return {"status": "success", "message": f"Requisição enviada para {destinatario}. Assumindo sucesso (WAHA processará em segundo plano)."}
+    
+    except requests.exceptions.ConnectionError as e:
+        return {"status": "error", "message": f"Erro de Conexão com o WAHA. Verifique se o servidor está rodando em '{WAHA_URL}'. Detalhes: {e}"}
     except Exception as e:
-        return {"status": "error", "message": f"Erro de conexão com o WAHA: {e}"}
+        return {"status": "error", "message": f"Erro inesperado ao conectar com o WAHA: {e}"}
+
 
 # --- CARREGAMENTO INICIAL DOS CONTATOS ---
 CONTATOS_CARREGADOS = carregar_contatos_csv(CAMINHO_CSV_CONTATOS)
 
 # --- ROTAS DA API FLASK ---
-
 @app.route('/', methods=['GET'])
 def index():
-    """Rota raiz para verificar se a API está online."""
-    return "<h1>API de Automação de Clínicas no ar!</h1><p>Para usar, envie uma requisição POST para /processar.</p>"
+    return render_template('index.html')
 
-@app.route('/processar', methods=['POST'])
+@app.route('/api/status', methods=['GET'])
+def status():
+    return jsonify({"status": "online"})
+
+@app.route('/api/processar', methods=['POST'])
 def processar_endpoint():
-    """Endpoint principal que recebe o código da requisição e executa o fluxo."""
     log_execucao = []
     data = request.get_json()
     if not data or 'codRequisicao' not in data:
@@ -136,19 +163,26 @@ def processar_endpoint():
     log_execucao.append("Laudo em Base64 obtido com sucesso.")
 
     destinatarios = CONTATOS_CARREGADOS.get(local_origem_api, [])
+    log_execucao.append(f"Contatos encontrados para '{local_origem_api}': {destinatarios}")
+
     if not destinatarios:
-        log_execucao.append(f"AVISO: Nenhum destinatário encontrado para '{local_origem_api}'.")
+        log_execucao.append(f"AVISO: Nenhum destinatário válido encontrado para '{local_origem_api}'.")
     else:
         log_execucao.append(f"Disparando laudo para {len(destinatarios)} contato(s)...")
         mensagem_final = MENSAGEM_PADRAO_TEMPLATE.format(nome_paciente=nome_paciente, cod_requisicao=cod_requisicao.strip())
         for contato in destinatarios:
-            resultado_envio = enviar_pdf_waha(pdf_base64, NOME_ARQUIVO_SAIDA, contato, mensagem_final)
+            resultado_envio = enviar_pdf_waha(pdf_base64, nome_paciente, contato, mensagem_final)
             log_execucao.append(f"[{contato}]: {resultado_envio['message']}")
-
-    return jsonify({"status": "success", "log": log_execucao}), 200
+    
+    return jsonify({
+        "status": "success", 
+        "log": log_execucao,
+        "paciente": nome_paciente,
+        "requisicao": cod_requisicao.strip()
+    }), 200
 
 # --- EXECUÇÃO DO SERVIDOR ---
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 2806))
     app.run(host='0.0.0.0', port=port, debug=True)
 

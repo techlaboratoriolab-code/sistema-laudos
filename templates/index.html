@@ -17,6 +17,7 @@
             background: #f8f9fa;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 20px;
@@ -31,6 +32,7 @@
             width: 100%;
             max-width: 600px;
             border: 1px solid #e9ecef;
+            margin-bottom: 20px;
         }
 
         .header {
@@ -250,21 +252,6 @@
             background: #5a6268;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .form-section, .help-section {
-                padding: 16px;
-            }
-        }
-
         .help-section {
             background: #ffffff;
             border-radius: 6px;
@@ -446,6 +433,67 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+
+        /* Estilos do Footer */
+        .footer {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px 32px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-info {
+            color: #6c757d;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .footer-version {
+            color: #007bff;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .footer-copyright {
+            color: #495057;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container, .footer {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-section, .help-section {
+                padding: 16px;
+            }
+
+            .footer {
+                padding: 16px 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -457,7 +505,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-file-medical-alt"></i> Sistema de Laudos</h1>
-            <p>Envio de laudos médicos via WhatsApp</p>
+            <p>Laboratório-LAB</p>
         </div>
 
         <div class="help-section">
@@ -472,7 +520,7 @@
                         <div class="step-number">1</div>
                         <div class="step-content">
                             <h4>Obtenha o código da requisição</h4>
-                            <p>Localize o código da requisição médica no sistema do laboratório ou documento físico.</p>
+                            <p>Localize o código da requisição médica no Aplis do Laboratório ou documento físico.</p>
                         </div>
                     </div>
                     <div class="help-step">
@@ -510,7 +558,7 @@
 
                 <div class="help-example">
                     <h4><i class="fas fa-lightbulb"></i> Exemplo de código:</h4>
-                    <div class="example-code">LAB2024001</div>
+                    <div class="example-code">0202042034005</div>
                 </div>
             </div>
         </div>
@@ -554,6 +602,21 @@
                 <button class="clear-btn" onclick="clearLogs()">Limpar</button>
             </div>
             <div class="log-content" id="logContent"></div>
+        </div>
+    </div>
+
+    <!-- Footer com informações de versão e direitos -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-version">
+                <i class="fas fa-code-branch"></i> Versão 0.6 - Teste
+            </div>
+            <div class="footer-info">
+                Sistema de Automação de envio de Laudos
+            </div>
+            <div class="footer-copyright">
+                <i class="fas fa-copyright"></i> 2025- Todos os direitos reservados • <strong>Laboratório-LAB</strong>
+            </div>
         </div>
     </div>
 
@@ -620,21 +683,53 @@
 
                 const data = await response.json();
 
-                if (data.status === 'success') {
-                    showStatus('success', 'Sucesso!', 
-                        `Laudo processado e enviado com sucesso!<br>
-                         <strong>Paciente:</strong> ${data.paciente}<br>
-                         <strong>Requisição:</strong> ${data.requisicao}`);
-                    
-                    // Limpar o formulário após sucesso
-                    document.getElementById('codRequisicao').value = '';
-                } else {
-                    showStatus('error', 'Erro no Processamento', data.message || 'Erro desconhecido');
-                }
-
-                // Mostrar logs se disponíveis
+                // Mostrar logs primeiro se disponíveis
                 if (data.log && data.log.length > 0) {
                     showLogs(data.log);
+                }
+
+                // Verificar se há erros nos logs ou avisos críticos
+                const hasErrors = data.log && data.log.some(log => 
+                    log.includes('ERRO') || 
+                    log.includes('❌') || 
+                    log.includes('AVISO: Nenhum destinatário válido encontrado') ||
+                    log.includes('Nenhum contato válido encontrado') ||
+                    log.toLowerCase().includes('erro') ||
+                    log.toLowerCase().includes('falhou') ||
+                    log.toLowerCase().includes('falha')
+                );
+
+                const hasWarnings = data.log && data.log.some(log => 
+                    log.includes('AVISO') || 
+                    log.includes('⚠️')
+                );
+
+                // Lógica de status corrigida
+                if (data.status === 'success' && !hasErrors) {
+                    if (hasWarnings) {
+                        showStatus('error', 'Processamento com Problemas', 
+                            `O laudo foi processado, mas houve problemas no envio.<br>
+                             <strong>Paciente:</strong> ${data.paciente || 'N/A'}<br>
+                             <strong>Requisição:</strong> ${data.requisicao || codRequisicao}<br>
+                             <em>Verifique os logs para mais detalhes.</em>`);
+                    } else {
+                        showStatus('success', 'Sucesso!', 
+                            `Laudo processado e enviado com sucesso!<br>
+                             <strong>Paciente:</strong> ${data.paciente}<br>
+                             <strong>Requisição:</strong> ${data.requisicao}`);
+                        
+                        // Limpar o formulário apenas em caso de sucesso real
+                        document.getElementById('codRequisicao').value = '';
+                    }
+                } else {
+                    // Caso de erro - não limpar o formulário
+                    let errorMessage = data.message || 'Erro no processamento da requisição.';
+                    
+                    if (hasErrors || hasWarnings) {
+                        errorMessage += '<br><em>Verifique os logs abaixo para mais detalhes.</em>';
+                    }
+                    
+                    showStatus('error', 'Erro no Processamento', errorMessage);
                 }
 
             } catch (error) {
