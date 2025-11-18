@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sistema-laudos
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn automacao_hiago:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: WAHA_URL
+        value: https://automacaolab.ngrok.dev/api/sendFile
+      - key: WAHA_SESSION
+        value: bot-whatsapp
+      - key: WAHA_API_KEY
+        value: 43092119c8b54d82ae07a0d694125ee
+      - key: CSV_CONTATOS
+        value: contatos_envio.csv
