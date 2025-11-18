@@ -28,7 +28,7 @@ MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Req
 NOME_ARQUIVO_SAIDA = "nome_paciente"
 
 # --- CONFIGURAÇÃO DO ARQUIVO DE CONTATOS ---
-CAMINHO_CSV_CONTATOS = "Números de confiança LAB.csv"
+CAMINHO_CSV_CONTATOS = os.environ.get("CSV_CONTATOS", "contatos_envio.csv")
 
 # --- FUNÇÕES AUXILIARES ---
 
@@ -39,6 +39,17 @@ def carregar_contatos_csv(caminho_arquivo):
     try:
         diretorio_atual = os.path.dirname(os.path.abspath(__file__))
         caminho_completo = os.path.join(diretorio_atual, caminho_arquivo)
+
+        # Tentar encontrar o arquivo CSV em locais alternativos
+        if not os.path.exists(caminho_completo):
+            # Tentar outros nomes comuns
+            nomes_alternativos = ["contatos_envio.csv", "Números de confiança LAB.csv", "contatos.csv"]
+            for nome in nomes_alternativos:
+                caminho_alt = os.path.join(diretorio_atual, nome)
+                if os.path.exists(caminho_alt):
+                    caminho_completo = caminho_alt
+                    print(f"Usando arquivo alternativo: {nome}")
+                    break
 
         with open(caminho_completo, mode='r', encoding='utf-8') as infile:
             reader = csv.DictReader(infile)
@@ -128,17 +139,24 @@ def index():
 
 @app.route('/api/status', methods=['GET'])
 def status():
-    return jsonify({"status": "online"})
+    return jsonify({
+        "status": "online",
+        "contatos_carregados": len(CONTATOS_CARREGADOS),
+        "locais": list(CONTATOS_CARREGADOS.keys())
+    })
 
 @app.route('/api/processar', methods=['POST'])
 def processar_endpoint():
     log_execucao = []
-    data = request.get_json()
-    if not data or 'codRequisicao' not in data:
-        return jsonify({"status": "error", "message": "O campo 'codRequisicao' é obrigatório."}), 400
+    try:
+        data = request.get_json()
+        if not data or 'codRequisicao' not in data:
+            return jsonify({"status": "error", "message": "O campo 'codRequisicao' é obrigatório.", "log": []}), 400
 
-    cod_requisicao = data['codRequisicao']
-    log_execucao.append(f"Iniciando processamento para a requisição: {cod_requisicao}")
+        cod_requisicao = data['codRequisicao']
+        log_execucao.append(f"Iniciando processamento para a requisição: {cod_requisicao}")
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Erro ao processar request: {str(e)}", "log": []}), 400
 
     resultado_api = fazer_requisicao_api("requisicaoResultado", cod_requisicao)
     if resultado_api['status'] == 'error':
