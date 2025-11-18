@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(if not exist templates mkdir templates)"
+      "Bash(if not exist templates mkdir templates)",
+      "Bash(find:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

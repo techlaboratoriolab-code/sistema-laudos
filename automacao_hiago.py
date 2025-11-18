@@ -9,7 +9,17 @@ from flask_cors import CORS
 
 # --- INICIALIZAÇÃO DO FLASK ---
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Adicionar handler de erro global
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return jsonify({
+        "status": "error",
+        "message": f"Erro interno: {str(e)}",
+        "log": [traceback.format_exc()]
+    }), 500
 
 # --- CONFIGURAÇÕES GERAIS ---
 API_URL = "https://lab.aplis.inf.br/api/integracao.php"
@@ -142,8 +152,26 @@ def status():
     return jsonify({
         "status": "online",
         "contatos_carregados": len(CONTATOS_CARREGADOS),
-        "locais": list(CONTATOS_CARREGADOS.keys())
+        "locais": list(CONTATOS_CARREGADOS.keys()),
+        "waha_url": WAHA_URL,
+        "csv_path": CAMINHO_CSV_CONTATOS
     })
+
+@app.route('/api/test', methods=['POST'])
+def test_endpoint():
+    """Endpoint de teste simples"""
+    try:
+        data = request.get_json()
+        return jsonify({
+            "status": "success",
+            "message": "Endpoint funcionando!",
+            "received": data
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @app.route('/api/processar', methods=['POST'])
 def processar_endpoint():
