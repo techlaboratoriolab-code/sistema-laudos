@@ -18,9 +18,9 @@ API_PASSWORD = "nintendo64"
 API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
-WAHA_URL = "http://localhost:3000/api/sendFile"
-WAHA_SESSION = "testano"
-# WAHA_API_KEY = "SUA_CHAVE_DE_API_AQUI"
+WAHA_URL = "http://localhost:4000/api/sendFile"
+WAHA_SESSION = "bot-whatsapp"
+WAHA_API_KEY = "450759cbecc9440ea2e6574b2e175353"
 
 # --- CONFIGURAÇÕES DE MENSAGEM E ARQUIVO (EDITÁVEL) ---
 MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Requisição: {cod_requisicao})."
