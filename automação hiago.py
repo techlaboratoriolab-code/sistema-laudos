@@ -18,7 +18,7 @@ API_PASSWORD = "nintendo64"
 API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
-WAHA_URL = "http://localhost:4000/api/sendFile"
+WAHA_URL = "https://automacaolab.ngrok.dev/api/sendFile"
 WAHA_SESSION = "bot-whatsapp"
 WAHA_API_KEY = "450759cbecc9440ea2e6574b2e175353"
 
