@@ -30,7 +30,7 @@ API_HEADERS = {"Content-Type": "application/json"}
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
 WAHA_URL = os.environ.get("WAHA_URL", "https://automacaolab.ngrok.dev/api/sendFile")
 WAHA_SESSION = os.environ.get("WAHA_SESSION", "bot-whatsapp")
-WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "43092119c8b54d82ae07a0d694125ee")
+WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "450759cbecc9440ea2e6574b2e175353")
 
 # --- CONFIGURAÇÕES DE MENSAGEM E ARQUIVO (EDITÁVEL) ---
 MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Requisição: {cod_requisicao})."
@@ -118,15 +118,23 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
         "session": WAHA_SESSION
     }
     try:
-        # --- ESTRATÉGIA "FIRE AND FORGET" ---
-        # Enviamos a requisição com um timeout muito curto (2 segundos).
-        # A intenção é apenas despachar os dados para o WAHA e não esperar
-        # pelo processamento completo, que está a causar o timeout.
-        print(f"Disparando requisição para {destinatario} (estratégia 'fire and forget')...")
-        requests.post(WAHA_URL, headers=headers, json=payload, timeout=2)
+        # Tentar enviar com timeout maior para capturar resposta
+        print(f"Enviando PDF para {destinatario} via WAHA...")
+        print(f"URL: {WAHA_URL}")
+        print(f"Session: {WAHA_SESSION}")
+        print(f"API Key: {WAHA_API_KEY[:10]}...")
 
-        # Se chegarmos aqui, o WAHA respondeu muito rápido (improvável, mas possível)
-        return {"status": "success", "message": f"Requisição enviada para {destinatario}. WAHA respondeu inesperadamente rápido."}
+        response = requests.post(WAHA_URL, headers=headers, json=payload, timeout=10)
+
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.text[:200]}")
+
+        if response.status_code == 200 or response.status_code == 201:
+            return {"status": "success", "message": f"PDF enviado com sucesso para {destinatario}!"}
+        elif response.status_code == 401:
+            return {"status": "error", "message": f"ERRO: Autenticação falhou. Verifique a API Key do WAHA. Response: {response.text}"}
+        else:
+            return {"status": "error", "message": f"ERRO: WAHA retornou status {response.status_code}. Response: {response.text}"}
 
     except requests.exceptions.Timeout:
         # Este é o resultado ESPERADO. O timeout acontece, mas os dados já foram enviados.
