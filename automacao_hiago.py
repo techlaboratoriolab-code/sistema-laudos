@@ -30,7 +30,7 @@ API_HEADERS = {"Content-Type": "application/json"}
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
 WAHA_URL = os.environ.get("WAHA_URL", "https://automacaolab.ngrok.dev/api/sendFile")
 WAHA_SESSION = os.environ.get("WAHA_SESSION", "bot-whatsapp")
-WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "450759cbecc9440ea2e6574b2e175353")
+WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "6ca0d966b8194b94be9870e316c1bae8")
 
 # --- CONFIGURAÇÕES DE MENSAGEM E ARQUIVO (EDITÁVEL) ---
 MENSAGEM_PADRAO_TEMPLATE = "Olá! Segue em anexo o laudo de {nome_paciente} (Requisição: {cod_requisicao})."
