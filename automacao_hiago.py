@@ -129,7 +129,7 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
         response = requests.post(url, headers=headers, json=payload, timeout=30, verify=False)
 
         print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.text[:200]}")
+        print(f"Response: {response.text[:500]}")
 
         if response.status_code == 200 or response.status_code == 201:
             return {"status": "success", "message": f"PDF enviado com sucesso para {destinatario}!"}
@@ -227,7 +227,8 @@ def processar_endpoint():
         log_execucao.append(f"Disparando laudo para {len(destinatarios)} contato(s)...")
         mensagem_final = MENSAGEM_PADRAO_TEMPLATE.format(nome_paciente=nome_paciente, cod_requisicao=cod_requisicao.strip())
         for contato in destinatarios:
-            resultado_envio = enviar_pdf_waha(pdf_base64, nome_paciente, contato, mensagem_final)
+            nome_arquivo_pdf = f"{nome_paciente}.pdf"
+            resultado_envio = enviar_pdf_waha(pdf_base64, nome_arquivo_pdf, contato, mensagem_final)
             log_execucao.append(f"[{contato}]: {resultado_envio['message']}")
 
     return jsonify({
