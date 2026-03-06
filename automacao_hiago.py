@@ -28,7 +28,7 @@ API_PASSWORD = "apilab00421"
 API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
-WAHA_URL = os.environ.get("WAHA_URL", "https://automacaolab.ngrok.dev/api/sendFile")
+WAHA_URL = os.environ.get("WAHA_URL", "https://192.168.160.155:4300")
 WAHA_SESSION = os.environ.get("WAHA_SESSION", "TI LAB")
 WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "690ccc32b7404a7d8d7db5fb76c94888")
 
@@ -112,19 +112,19 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
     if WAHA_API_KEY:
         headers['X-Api-Key'] = WAHA_API_KEY
 
+    url = f"{WAHA_URL}/api/{WAHA_SESSION}/sendFile"
     payload = {
         "chatId": destinatario, "caption": mensagem,
         "file": {"filename": nome_arquivo, "mimetype": "application/pdf", "data": pdf_base64_data},
         "session": WAHA_SESSION
     }
     try:
-        # Tentar enviar com timeout maior para capturar resposta
         print(f"Enviando PDF para {destinatario} via WAHA...")
-        print(f"URL: {WAHA_URL}")
+        print(f"URL: {url}")
         print(f"Session: {WAHA_SESSION}")
         print(f"API Key: {WAHA_API_KEY[:10]}...")
 
-        response = requests.post(WAHA_URL, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
 
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.text[:200]}")
