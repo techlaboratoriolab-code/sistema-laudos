@@ -31,7 +31,7 @@ API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
 WAHA_URL = os.environ.get("WAHA_URL", "http://192.168.160.155:4300")
-WAHA_SESSION = os.environ.get("WAHA_SESSION", "TI LAB")
+WAHA_SESSION = os.environ.get("WAHA_SESSION", "TIBOT")
 WAHA_API_KEY = os.environ.get("WAHA_API_KEY", "690ccc32b7404a7d8d7db5fb76c94888")
 
 # --- CONFIGURAÇÕES DE MENSAGEM E ARQUIVO (EDITÁVEL) ---
