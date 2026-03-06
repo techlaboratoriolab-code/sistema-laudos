@@ -114,7 +114,7 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
     if WAHA_API_KEY:
         headers['X-Api-Key'] = WAHA_API_KEY
 
-    url = f"{WAHA_URL}/api/{requests.utils.quote(WAHA_SESSION, safe='')}/sendFile"
+    url = f"{WAHA_URL}/api/sendFile"
     payload = {
         "chatId": destinatario, "caption": mensagem,
         "file": {"filename": nome_arquivo, "mimetype": "application/pdf", "data": pdf_base64_data},
