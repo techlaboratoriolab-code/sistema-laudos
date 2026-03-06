@@ -4,6 +4,8 @@ import base64
 import os
 import csv
 import time
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
@@ -112,7 +114,7 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
     if WAHA_API_KEY:
         headers['X-Api-Key'] = WAHA_API_KEY
 
-    url = f"{WAHA_URL}/api/{WAHA_SESSION}/sendFile"
+    url = f"{WAHA_URL}/api/{requests.utils.quote(WAHA_SESSION, safe='')}/sendFile"
     payload = {
         "chatId": destinatario, "caption": mensagem,
         "file": {"filename": nome_arquivo, "mimetype": "application/pdf", "data": pdf_base64_data},
@@ -124,7 +126,7 @@ def enviar_pdf_waha(pdf_base64_data, nome_arquivo, destinatario, mensagem):
         print(f"Session: {WAHA_SESSION}")
         print(f"API Key: {WAHA_API_KEY[:10]}...")
 
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=30, verify=False)
 
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.text[:200]}")
