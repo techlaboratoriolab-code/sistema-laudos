@@ -24,7 +24,7 @@ def handle_exception(e):
 # --- CONFIGURAÇÕES GERAIS ---
 API_URL = "https://lab.aplis.inf.br/api/integracao.php"
 API_USERNAME = "api.lab"
-API_PASSWORD = "nintendo64"
+API_PASSWORD = "apilab00421"
 API_HEADERS = {"Content-Type": "application/json"}
 
 # --- CONFIGURAÇÕES DO WAHA (VERIFIQUE AQUI) ---
