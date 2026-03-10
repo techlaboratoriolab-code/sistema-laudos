@@ -101,7 +101,7 @@ def fazer_requisicao_api(cmd, cod_req):
             return {"status": "success", "data": resposta_json["dat"]}
         else:
             msg_erro = resposta_json.get('dat', {}).get('msg', 'Mensagem de erro não encontrada.')
-            return {"status": "error", "message": f"Falha na API do lab ao buscar '{cmd}': {msg_erro}"}
+            return {"status": "error", "message": f"Falha na API do lab ao buscar '{cmd}': {msg_erro} | Resposta completa: {json.dumps(resposta_json)}"}
     except Exception as e:
         return {"status": "error", "message": f"Erro de conexão com a API do lab: {e}"}
 
